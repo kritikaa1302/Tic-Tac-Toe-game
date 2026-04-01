@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tic Tac Toe</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+body{
+background: linear-gradient(270deg,#020617,#0f172a,#1e293b,#020617);
+background-size: 600% 600%;
+animation: aurora 15s ease infinite;
+}
+
+@keyframes aurora{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
+
+.flower{
+position:absolute;
+font-size:30px;
+animation:fall 3s linear infinite;
+}
+
+@keyframes fall{
+0%{transform:translateY(-100px);opacity:1;}
+100%{transform:translateY(100vh);opacity:0;}
+}
+</style>
+</head>
+
+<body class="h-screen flex items-center justify-center text-white">
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+const {useState} = React;
+
+function App(){
+
+const [board,setBoard]=useState(Array(9).fill(""));
+const [player,setPlayer]=useState("🌸");
+const [mode,setMode]=useState(null);
+const [status,setStatus]=useState("Choose Mode");
+const [scores,setScores]=useState({p1:0,p2:0});
+const [active,setActive]=useState(false);
+
+const winPatterns=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+];
+
+const handleClick=(i)=>{
+if(board[i]!=="" || !active) return;
+
+let newBoard=[...board];
+newBoard[i]=player;
+setBoard(newBoard);
+
+if(checkWinner(newBoard)) return;
+
+if(mode==="ai" && player==="🌸"){
+setPlayer("🌼");
+setStatus("Computer thinking...");
+setTimeout(()=>computerMove(newBoard),500);
+}else{
+let next=player==="🌸"?"🌼":"🌸";
+setPlayer(next);
+setStatus(next+" Turn");
+}
+};
+
+const computerMove=(currBoard)=>{
+let empty=currBoard.map((v,i)=>v===""?i:null).filter(v=>v!==null);
+let rand=empty[Math.floor(Math.random()*empty.length)];
+
+let newBoard=[...currBoard];
+newBoard[rand]="🌼";
+setBoard(newBoard);
+
+if(checkWinner(newBoard)) return;
+
+setPlayer("🌸");
+setStatus("🌸 Your Turn");
+};
+
+const checkWinner=(b)=>{
+
+for(let p of winPatterns){
+let [a,b1,c]=p;
+
+if(b[a] && b[a]===b[b1] && b[b1]===b[c]){
+
+setStatus(b[a]+" Wins! 🎉");
+setActive(false);
+
+if(b[a]==="🌸"){
+setScores(s=>({...s,p1:s.p1+1}));
+}else{
+setScores(s=>({...s,p2:s.p2+1}));
+}
+
+flowerCelebration();
+return true;
+}
+}
+
+if(b.every(cell=>cell!=="")){
+setStatus("Draw 🤝");
+setActive(false);
+return true;
+}
+
+return false;
+};
+
+const restart=()=>{
+setBoard(Array(9).fill(""));
+setPlayer("🌸");
+setActive(true);
+setStatus("🌸 Turn");
+};
+
+const startMode=(m)=>{
+setMode(m);
+restart();
+};
+
+const flowerCelebration=()=>{
+for(let i=0;i<25;i++){
+let f=document.createElement("div");
+f.innerHTML="🌸";
+f.className="flower";
+f.style.left=Math.random()*100+"vw";
+f.style.animationDuration=(Math.random()*2+2)+"s";
+document.body.appendChild(f);
+
+setTimeout(()=>f.remove(),3000);
+}
+};
+
+return(
+<div className="backdrop-blur-xl bg-white/10 p-8 rounded-3xl shadow-2xl text-center">
+
+<h1 className="text-2xl mb-3">🌸 Flower Tic Tac Toe 🌸</h1>
+
+<div className="mb-2">
+<button onClick={()=>startMode("player")} className="m-1 px-4 py-2 rounded-full bg-pink-500">👩‍🤝‍👩 Player</button>
+<button onClick={()=>startMode("ai")} className="m-1 px-4 py-2 rounded-full bg-purple-500">🤖 AI</button>
+</div>
+
+<div className="mb-2">
+🌸 {scores.p1} | 🌼 {scores.p2}
+</div>
+
+<div className="grid grid-cols-3 gap-3 mt-4">
+{board.map((val,i)=>(
+<div key={i}
+onClick={()=>handleClick(i)}
+className="w-24 h-24 flex items-center justify-center text-3xl rounded-xl bg-white/20 hover:bg-white/40 cursor-pointer transition">
+{val}
+</div>
+))}
+</div>
+
+<div className="mt-3">{status}</div>
+
+<button onClick={restart} className="mt-3 px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full">
+Restart
+</button>
+
+</div>
+);
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+
+</script>
+
+</body>
+</html>
